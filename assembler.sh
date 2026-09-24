@@ -26,13 +26,12 @@ if ! [[ "$1" =~ \.vsc$ ]]; then
 else
 	input_file="$1"
 	output_file="${input_file%.vsc}.bin"
-	echo "$output_file" #delete
+	#echo "$output_file" #delete
 	
 
 	if [ ! -s "$input_file" ]; then
 		echo "usage: the file is empty - no .bin file is produced"
 		exit 1
-	else
 		#echo "we are continuing with code" #delete
 	fi	
 
@@ -40,7 +39,7 @@ fi
 
 line1=$(sed -n '1p' "$input_file")
 
-echo "about to check first line"
+#echo "about to check first line"
 Line1="${line1%$'\r'}"
 #want to first check that they are integers, then if they are 0 or 2
 if [ "$Line1" -ne 0 ] && [ "$Line1" -ne 2 ]; then
@@ -58,7 +57,7 @@ elif [ "$Line1" -eq 0 ]; then
 	fi
 
 elif [ "$Line1" -eq 2 ]; then
-	echo "time to go in the 2 branch" #delete
+	#echo "time to go in the 2 branch" #delete
 	line2=$(sed -n '2p' "$input_file")
 	Line2="${line2%$'\r'}"
 	
@@ -112,8 +111,7 @@ do
 
 		echo "usage: unknown command in line"
 		exit 1
-	else
-		#echo "command length is not suspicious"
+		#else echo "command length is not suspicious"
 	fi
 	
 done
