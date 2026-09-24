@@ -1,5 +1,27 @@
 #!/bin/bash 
 
+decimal_to_binary(){
+num=$1
+binary=""
+temp=num
+
+for weight in 128 64 32 16 8 4 2 1
+do
+if (( $temp >= $weight )); then
+
+binary="${binary}1"
+temp=$(( $temp - $weight ))
+
+else
+binary="${binary}0"
+
+fi
+
+done
+
+echo "$binary"
+}
+
 
 
 
@@ -48,7 +70,7 @@ if [ "$Line1" -ne 0 ] && [ "$Line1" -ne 2 ]; then
 elif [ "$Line1" -eq 0 ]; then
 	line2=$(sed -n '2p' "$input_file")
 	Line2="${line2%$'\r'}"
-	if [ "$Line2" ==  "QUIT,0,0" ]; then
+	if [ "$Line2" == "QUIT,0,0" ]; then
 		printf '\x20' > filename.bin
 		printf '\x00' >> filename.bin	
 		xxd -c 1 filename.bin
@@ -97,11 +119,13 @@ elif [ "$Line1" -eq 2 ]; then
 fi
 
 
-line_count=$(wc -l < "$input_file")
+number_of_lines=$(wc -l < "$input_file")
+number_of_lines="$(echo -e "${number_of_lines}" | tr -d '[:space:]')"
+echo "$number_of_lines"
 
-
-for (( i = 4; i <= "$line_count"; i += 1 ))
+for (( i = 4; i <= "$number_of_lines"; i++ ))
 do
+	echo "I am running a loop now"
 	line=$(sed -n "${i}p" "$input_file")
 	
 
@@ -111,7 +135,23 @@ do
 
 		echo "usage: unknown command in line"
 		exit 1
-		#else echo "command length is not suspicious"
+	else
+		IFS=, read -r ins reg mem <<< "$line"
+		echo "$ins"
+		echo "$reg"
+		echo "$mem"
+		
+		if grep -q "$ins" command_list.txt; then
+			echo found
+
+		else
+			echo not found
+			echo "usage: command is invalid"
+			exit 1
+		fi		
+		
+
+	
 	fi
 	
 done
