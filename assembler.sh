@@ -3,7 +3,7 @@
 decimal_to_binary(){
 num=$1
 binary=""
-temp=num
+temp=$num
 
 for weight in 128 64 32 16 8 4 2 1
 do
@@ -22,7 +22,76 @@ done
 echo "$binary"
 }
 
+decimal_to_hex(){
+num=$1
+hex=""
+temp=$num
 
+if (( $temp >= 16 )); then
+	digit=$(( $temp / 16 ))	
+
+	differand=$(( $digit * 16 ))
+
+	temp=$(( $temp - $differand ))
+        if (( $digit == 15 )); then
+                hex="${hex}f"
+
+        elif (( $digit == 14 )); then
+                hex="${hex}e"
+
+        elif (( $digit == 13 )); then
+                hex="${hex}d"
+
+        elif (( $digit == 12 )); then
+                hex="${hex}c"
+
+        elif (( $digit == 11 )); then
+                hex="${hex}b"
+
+        elif (( $digit == 10 )); then
+                hex="${hex}a"
+
+        else
+                hex="${hex}$digit"
+	fi
+else
+	hex="${hex}0"
+fi
+
+
+if (( $temp >= 1 )); then
+
+	if (( $temp == 15 )); then
+		hex="${hex}f"
+
+        elif (( $temp == 14 )); then
+                hex="${hex}e"
+	
+        elif (( $temp == 13 )); then
+                hex="${hex}d"
+
+        elif (( $temp == 12 )); then
+                hex="${hex}c"
+
+        elif (( $temp == 11 )); then
+                hex="${hex}b"
+
+        elif (( $temp == 10 )); then
+                hex="${hex}a"
+
+        else
+                hex="${hex}$temp" 
+	fi	
+
+else
+	hex="${hex}0"
+
+fi
+
+
+
+echo "$hex"
+}
 
 
 if [ "$#" -eq 0 ]; then
@@ -99,6 +168,7 @@ elif [ "$Line1" -eq 2 ]; then
 			dataArray=()
 			dataArray[0]="$Line1"
 			dataArray[1]="$Line2"
+			dataArray[2]="$Line3"		
 			#echo "${dataArray[0]}"
 			#echo "${dataArray[1]}"			
 			#echo "data Array echoed"
@@ -143,27 +213,78 @@ do
 		
 		if grep -q "$ins" command_list.txt; then
 			echo found
+			if [ "$ins" == "LOAD" ]; then
+				opcode=000001
+			elif [ "$ins" == "STORE" ]; then
+				opcode=000010
+			elif [ "$ins" == "ADD" ]; then
+				opcode=000011
+			elif [ "$ins" == "SUB" ]; then
+				opcode=000100
+			elif [ "$ins" == "QUIT" ]; then
+				opcode=001000
+			elif [ "$ins" == "PRINT" ]; then
+				opcode=001001
+			fi
+
+			echo "$opcode"
 
 		else
 			echo not found
 			echo "usage: command is invalid"
 			exit 1
 		fi		
-		
 
-	
+	        if ! [[ "$reg" =~ ^[0-9]+$ ]]; then
+                	#consider when reg is empty
+			echo "usage: non-integer in register space"
+        	        exit 1
+	        elif (( "$reg" >= 0 && "$reg" \< 4)); then
+			if (( "$reg" == 0 )); then
+				regbin=00
+			elif (( "$reg" == 1 )); then
+				regbin=01
+			elif (( "$reg" == 2 )); then
+				regbin=10
+			elif (( "$reg" == 3 )); then
+				regbin=11
+			fi
+			echo "$regbin"
+		else
+			echo "usage: register value inavlid"
+			exit 1
+		fi                
+		byte1=$opcode$regbin
+		echo "$byte1"
+		j=$(( $i - 1 ))
+		dataArray[j]=$(decimal_to_hex $((2#$byte1)))
+		echo "echoing data Array"
+		echo "${dataArray[j]}"
+ 		if ! [[ "$mem" =~ ^[0-9]+$ ]]; then
+			#consider when reg is empty
+			echo "usage: non-integer in register space"
+			exit 1
+
+		elif (( "$mem" >= 0 && "$mem" \< 256 )); then
+			decimal_to_binary "$mem"
+			#binary call here
+			echo "mem good"
+		else
+			echo "usage: memory value invalid"
+			exit 1
+
+		fi
+
+
+
 	fi
 	
 done
 	
 
-
-#echo "Now comes stuff I've not yet bothered to delete"
-
-#while IFS= read -r line; do
-#	printf '%s\n' "$line"
-
-
-
-
-#done < "$input_file"
+array_length=${#dataArray[@]}
+echo "$array_length"
+for (( i = 0; i < $array_length; i++ ))
+do
+	echo "${dataArray[i]}"
+done
