@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-running=1
+
 
 
 if [ "$#" -eq 0 ]; then
@@ -33,7 +33,7 @@ else
 		echo "usage: the file is empty - no .bin file is produced"
 		exit 1
 	else
-		echo "we are continuing with code" #delete
+		#echo "we are continuing with code" #delete
 	fi	
 
 fi
@@ -44,8 +44,8 @@ echo "about to check first line"
 Line1="${line1%$'\r'}"
 #want to first check that they are integers, then if they are 0 or 2
 if [ "$Line1" -ne 0 ] && [ "$Line1" -ne 2 ]; then
-	echo "I don't know the error message but this is wrong, as the first line is not 0 or 2"
-
+	echo "Invalid first line"
+	exit 1
 elif [ "$Line1" -eq 0 ]; then
 	line2=$(sed -n '2p' "$input_file")
 	Line2="${line2%$'\r'}"
@@ -53,7 +53,7 @@ elif [ "$Line1" -eq 0 ]; then
 		printf '\x20' > filename.bin
 		printf '\x00' >> filename.bin	
 		xxd -c 1 filename.bin
-#need to add extra dialogue lines here
+	#need to add extra dialogue lines here
 
 	fi
 
@@ -66,68 +66,66 @@ elif [ "$Line1" -eq 2 ]; then
 		echo "usage: non-integer in data space"		
 		exit 1
 	elif (( "$Line2" >= 0 && "$Line2" \< 128)); then
-		printf 'number is good\n' 
+		#printf 'number is good\n' 
 		line3=$(sed -n '3p' "$input_file")
 		Line3="${line3%$'\r'}"
 		if ! [[ "$Line3" =~ ^[0-9]+$ ]]; then
 			echo "usage: non-integer in data space"
 			exit 1
 		elif (( "$Line3" >= 0 && "$Line3" \< 128 )); then
-			printf 'number is good \n'
+			#printf 'number is good \n'
 			
 			dataArray=()
 			dataArray[0]="$Line1"
 			dataArray[1]="$Line2"
-			echo "${dataArray[0]}"
-			echo "${dataArray[1]}"			
-			echo "data Array echoed"
+			#echo "${dataArray[0]}"
+			#echo "${dataArray[1]}"			
+			#echo "data Array echoed"
 
 		else
 			
-			printf 'Number no good once again'
+			#printf 'Number no good once again'
 			exit 1
 
-
-
 		fi
-
-	
 	else
-		printf "NUMBER IS BAD"
+		#printf "NUMBER IS BAD"
 		exit 1
 
 	fi
 
 
-
-
 fi
 
 
-reading_file=0
-i=3
 line_count=$(wc -l < "$input_file")
 
-echo "about to give line count"
-echo "$line_count"
 
-while [ $i -le $line_count ]:
-	printf '$i'
-	i=$(( $i + 1 ))
-	
+for (( i = 4; i <= "$line_count"; i += 1 ))
+do
+	line=$(sed -n "${i}p" "$input_file")
 	
 
+	line_count=$(echo "$line" | tr -d '\n' |  wc -c)
+	
+	if (( "$line_count" > 11 )); then
+
+		echo "usage: unknown command in line"
+		exit 1
+	else
+		#echo "command length is not suspicious"
+	fi
+	
+done
+	
+
+
+#echo "Now comes stuff I've not yet bothered to delete"
+
+#while IFS= read -r line; do
+#	printf '%s\n' "$line"
 
 
 
-while IFS= read -r line; do
-	printf '%s\n' "$line"
 
-
-
-
-done < "$input_file"
-
-
-
-
+#done < "$input_file"
