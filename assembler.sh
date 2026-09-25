@@ -116,23 +116,18 @@ if ! [[ "$1" =~ \.vsc$ ]]; then
 	exit 1
 else
 	input_file="$1"
-	output_file="${input_file%.vsc}.bin"
-	#echo "$output_file" #delete
-	
+	output_file="${input_file%.vsc}.bin"	
 
 	if [ ! -s "$input_file" ]; then
 		echo "usage: the file is empty - no .bin file is produced"
 		exit 1
-		#echo "we are continuing with code" #delete
 	fi	
 
 fi
 
 line1=$(sed -n '1p' "$input_file")
 
-#echo "about to check first line"
 Line1="${line1%$'\r'}"
-#want to first check that they are integers, then if they are 0 or 2
 if [ "$Line1" -ne 0 ] && [ "$Line1" -ne 2 ]; then
 	echo "Invalid first line"
 	exit 1
@@ -145,12 +140,11 @@ elif [ "$Line1" -eq 0 ]; then
 		echo "It is a QUIT program"
 		echo "The content of the .bin file is"
 		xxd -c1 -p filename.bin
-	#need to add extra dialogue lines here
 		exit 0
 	fi
 
 elif [ "$Line1" -eq 2 ]; then
-	#echo "time to go in the 2 branch" #delete
+
 	line2=$(sed -n '2p' "$input_file")
 	Line2="${line2%$'\r'}"
 	
@@ -158,31 +152,26 @@ elif [ "$Line1" -eq 2 ]; then
 		echo "usage: non-integer in data space"		
 		exit 1
 	elif (( "$Line2" >= 0 && "$Line2" \< 128)); then
-		#printf 'number is good\n' 
+
 		line3=$(sed -n '3p' "$input_file")
 		Line3="${line3%$'\r'}"
 		if ! [[ "$Line3" =~ ^[0-9]+$ ]]; then
 			echo "usage: non-integer in data space"
 			exit 1
 		elif (( "$Line3" >= 0 && "$Line3" \< 128 )); then
-			#printf 'number is good \n'
-			
+
 			dataArray=()
-			#dataArray[0]="$Line1"
 	                dataArray[0]=$(decimal_to_hex $Line2)
 			dataArray[1]=$(decimal_to_hex $Line3)
-			#echo "${dataArray[0]}"
-			#echo "${dataArray[1]}"			
-			#echo "data Array echoed"
+
 
 		else
-			
-			#printf 'Number no good once again'
+			echo "usage: integer beyond data space"			
 			exit 1
 
 		fi
 	else
-		#printf "NUMBER IS BAD"
+
 		exit 1
 
 	fi
@@ -193,11 +182,11 @@ fi
 
 number_of_lines=$(wc -l < "$input_file")
 number_of_lines="$(echo -e "${number_of_lines}" | tr -d '[:space:]')"
-#echo "$number_of_lines"
+
 
 for (( i = 4; i <= "$number_of_lines"; i++ ))
 do
-	#echo "I am running a loop now"
+
 	line=$(sed -n "${i}p" "$input_file")
 	
 
@@ -209,12 +198,10 @@ do
 		exit 1
 	else
 		IFS=, read -r ins reg mem <<< "$line"
-		#echo "$ins"
-		#echo "$reg"
-		#echo "$mem"
+
 		
 		if grep -qx "$ins" command_list.txt; then
-			#echo found
+
 			if [ "$ins" == "LOAD" ]; then
 				opcode=000001
 				command=LOAD
@@ -235,16 +222,14 @@ do
 				command=PRINT
 			fi
 
-			#echo "$opcode"
 
 		else
-			#echo not found
+
 			echo "usage: $ins command is invalid"
 			exit 1
 		fi		
 
 	        if ! [[ "$reg" =~ ^[0-9]+$ ]]; then
-                	#consider when reg is empty
 			echo "usage: non-integer in register space"
         	        exit 1
 	        elif (( "$reg" >= 0 && "$reg" \< 4)); then
@@ -257,26 +242,20 @@ do
 			elif (( "$reg" == 3 )); then
 				regbin=11
 			fi
-			#echo "$regbin"
 		else
 			echo "usage: register value inavlid"
 			exit 1
 		fi                
 		byte1=$opcode$regbin
-		#echo "$byte1"
 		j=$(( 2 * $i - 6 ))
 		dataArray[j]=$(decimal_to_hex $((2#$byte1)))
-		#echo "echoing data Array"
-		#echo "${dataArray[j]}"
  		if ! [[ "$mem" =~ ^[0-9]+$ ]]; then
-			#consider when reg is empty
+
 			echo "usage: non-integer in register space"
 			exit 1
 
 		elif (( "$mem" >= 0 && "$mem" \< 256 )); then
 			running=good
-			#binary call here
-			#echo "mem good"
 		else
 			echo "usage: memory value invalid"
 			exit 1
@@ -294,14 +273,12 @@ done
 echo "It is an ADD/SUB program"
 echo "The content of the .bin file is"
 array_length=${#dataArray[@]}
-#echo "$array_length"
+
 for (( i = 0; i < $array_length; i++ ))
 do
 	
 	hex_digit="${dataArray[i]}"	
-	#printf %b '\x$var' >> filename.bin
 	printf %b "\\x$hex_digit" >> filename.bin
-	#echo -n "$hex_digit" | xxd -p >> filename.bin
 
 done
 
