@@ -142,9 +142,11 @@ elif [ "$Line1" -eq 0 ]; then
 	if [ "$Line2" == "QUIT,0,0" ]; then
 		printf '\x20' > filename.bin
 		printf '\x00' >> filename.bin	
-		xxd -c 1 filename.bin
+		echo "It is a QUIT program"
+		echo "The content of the .bin file is"
+		xxd -c1 -p filename.bin
 	#need to add extra dialogue lines here
-
+		exit 0
 	fi
 
 elif [ "$Line1" -eq 2 ]; then
@@ -166,9 +168,9 @@ elif [ "$Line1" -eq 2 ]; then
 			#printf 'number is good \n'
 			
 			dataArray=()
-			dataArray[0]="$Line1"
-			dataArray[1]="$Line2"
-			dataArray[2]="$Line3"		
+			#dataArray[0]="$Line1"
+	                dataArray[0]=$(decimal_to_hex $Line2)
+			dataArray[1]=$(decimal_to_hex $Line3)
 			#echo "${dataArray[0]}"
 			#echo "${dataArray[1]}"			
 			#echo "data Array echoed"
@@ -191,11 +193,11 @@ fi
 
 number_of_lines=$(wc -l < "$input_file")
 number_of_lines="$(echo -e "${number_of_lines}" | tr -d '[:space:]')"
-echo "$number_of_lines"
+#echo "$number_of_lines"
 
 for (( i = 4; i <= "$number_of_lines"; i++ ))
 do
-	echo "I am running a loop now"
+	#echo "I am running a loop now"
 	line=$(sed -n "${i}p" "$input_file")
 	
 
@@ -207,31 +209,37 @@ do
 		exit 1
 	else
 		IFS=, read -r ins reg mem <<< "$line"
-		echo "$ins"
-		echo "$reg"
-		echo "$mem"
+		#echo "$ins"
+		#echo "$reg"
+		#echo "$mem"
 		
-		if grep -q "$ins" command_list.txt; then
-			echo found
+		if grep -qx "$ins" command_list.txt; then
+			#echo found
 			if [ "$ins" == "LOAD" ]; then
 				opcode=000001
+				command=LOAD
 			elif [ "$ins" == "STORE" ]; then
 				opcode=000010
+				command=STORE
 			elif [ "$ins" == "ADD" ]; then
 				opcode=000011
+				command=ADD
 			elif [ "$ins" == "SUB" ]; then
 				opcode=000100
+				command=SUB
 			elif [ "$ins" == "QUIT" ]; then
 				opcode=001000
+				command=QUIT
 			elif [ "$ins" == "PRINT" ]; then
 				opcode=001001
+				command=PRINT
 			fi
 
-			echo "$opcode"
+			#echo "$opcode"
 
 		else
-			echo not found
-			echo "usage: command is invalid"
+			#echo not found
+			echo "usage: $ins command is invalid"
 			exit 1
 		fi		
 
@@ -249,26 +257,26 @@ do
 			elif (( "$reg" == 3 )); then
 				regbin=11
 			fi
-			echo "$regbin"
+			#echo "$regbin"
 		else
 			echo "usage: register value inavlid"
 			exit 1
 		fi                
 		byte1=$opcode$regbin
-		echo "$byte1"
-		j=$(( $i - 1 ))
+		#echo "$byte1"
+		j=$(( 2 * $i - 6 ))
 		dataArray[j]=$(decimal_to_hex $((2#$byte1)))
-		echo "echoing data Array"
-		echo "${dataArray[j]}"
+		#echo "echoing data Array"
+		#echo "${dataArray[j]}"
  		if ! [[ "$mem" =~ ^[0-9]+$ ]]; then
 			#consider when reg is empty
 			echo "usage: non-integer in register space"
 			exit 1
 
 		elif (( "$mem" >= 0 && "$mem" \< 256 )); then
-			decimal_to_binary "$mem"
+			running=good
 			#binary call here
-			echo "mem good"
+			#echo "mem good"
 		else
 			echo "usage: memory value invalid"
 			exit 1
@@ -276,15 +284,25 @@ do
 		fi
 
 
+		j=$(( $j + 1 ))
+		dataArray[j]=$(decimal_to_hex $mem)
 
 	fi
 	
 done
 	
-
+echo "It is an ADD/SUB program"
+echo "The content of the .bin file is"
 array_length=${#dataArray[@]}
-echo "$array_length"
+#echo "$array_length"
 for (( i = 0; i < $array_length; i++ ))
 do
-	echo "${dataArray[i]}"
+	
+	hex_digit="${dataArray[i]}"	
+	#printf %b '\x$var' >> filename.bin
+	printf %b "\\x$hex_digit" >> filename.bin
+	#echo -n "$hex_digit" | xxd -p >> filename.bin
+
 done
+
+xxd -c1 -p filename.bin
